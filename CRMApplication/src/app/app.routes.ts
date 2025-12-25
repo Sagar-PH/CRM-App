@@ -7,7 +7,19 @@ import { DashboardComponent } from './dashboard/dashboard.component';
 
 export const routes: Routes = [
     { path: '', component: HomeComponent },
-    { path: 'dashboard', component: DashboardComponent, canActivate: [DashboardAuthGuard]},
+    { path: 'dashboard', component: DashboardComponent, canActivate: [DashboardAuthGuard] },
     { path: 'login', component: LoginComponent },
-    { path: 'register', component: RegisterComponent}
+    { path: 'register', component: RegisterComponent },
+    {
+        path: 'salesorder',
+        loadChildren: () =>
+            import('./module/salesorder/salesorder.module')
+                .then(m => m.SalesOrderModule)
+    },
+    {
+        path: 'purchaseorder',
+        loadChildren: () =>
+            import('./module/purchaseorder/purchaseorder.module')
+                .then(m => m.PurchaseOrderModule)
+    }
 ];

@@ -1,0 +1,19 @@
+<p>create works!</p>
+<form #POrderForm="ngForm" (ngSubmit)="PurchaseOrderSubmit(POrderForm)">
+    <label for="orderid">Order ID: </label>
+    <input id="orderid" type="text" ngModel name="orderid" />
+
+    <label for="supplierid">Supplier ID: </label>
+    <input id="supplierid" type="text" ngModel name="supplierid" />
+
+    <label for="date">Date: </label>
+    <input id="date" type="date" ngModel name="date" />
+
+    <label for="currency">Currency: </label>
+    <input id="currency" type="number" ngModel name="currency" />
+
+    <label for="suppliername">Supplier Name: </label>
+    <input id="suppliername" type="text" ngModel name="suppliername" />
+
+    <input type="submit">
+</form>
