@@ -1,16 +1,24 @@
-<p>login works!</p>
-<h3>Welcome to Login Page</h3>
+<ng-container>
 
-<div *ngIf="errorMessage" class="error">
-  {{ errorMessage }}
-</div>
+  <h3>Welcome to Login Page</h3>
 
-<form #loginForm="ngForm" (ngSubmit)="LoginSubmit(loginForm)">
-  <label for="username">UserName: </label>
-  <input id="username" type="text" ngModel name="username" />
+  <div *ngIf="errorMessage" class="error" role="alert">
+    {{ errorMessage }}
+  </div>
 
-  <label for="password">Password: </label>
-  <input id="password" type="password" ngModel name="password" />
+  <form #loginForm="ngForm" (ngSubmit)="LoginSubmit(loginForm)" novalidate>
 
-  <input type="submit">
-</form>
+    <div>
+      <label for="username">Username</label>
+      <input id="username" type="text" name="username" ngModel required />
+    </div>
+
+    <div>
+      <label for="password">Password</label>
+      <input id="password" type="password" name="password" ngModel required />
+    </div>
+
+    <button type="submit">Login</button>
+
+  </form>
+</ng-container>

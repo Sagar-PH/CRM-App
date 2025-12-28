@@ -1,24 +1,39 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private loggedIn = false;
+  private authenticate = new BehaviorSubject<boolean>(false);
+  public auth_observer = this.authenticate.asObservable();
 
-  async initAuth() {
-    const res = await fetch('http://localhost:8080/auth/check', {
+  private isloading = new BehaviorSubject<boolean>(true);
+  public load_observer = this.isloading.asObservable();
+
+  initAuth() {
+    fetch('http://localhost:8080/auth/check', {
       credentials: 'include'
-    });
-    const data = await res.json();
-    this.loggedIn = data.authenticated;
+    }).then(res => res.json())
+      .then(data => {
+        this.authenticate.next(data.authenticated)
+        this.isloading.next(false)
+      }).catch(err => this.authenticate.next(false));
   }
 
   setLoggedIn(status: boolean) {
-    this.loggedIn = status;
+    this.authenticate.next(status)
   }
 
   isLoggedIn(): boolean {
-    return this.loggedIn;
+    return this.authenticate.value;
+  }
+
+  setLoadingState(status: boolean) {
+    this.isloading.next(status)
+  }
+
+  getLoadingState(): boolean {
+    return this.isloading.value;
   }
 }

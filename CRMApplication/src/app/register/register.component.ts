@@ -16,29 +16,30 @@ export class RegisterComponent {
     private router: Router,
     private authService: AuthService,
   ) {
-    if (this.authService.isLoggedIn()) {
-      this.router.navigate(['/dashboard'])
-    }
+    this.authService.auth_observer.subscribe(isLoggedIn => {
+      // console.log(' -- Logged :: ', isLoggedIn)
+      if (isLoggedIn) this.router.navigateByUrl('/dashboard');
+    })
   }
-  
+
   errorMessage: String = '';
-  
-  RegisterSubmit(form:any) {
+
+  RegisterSubmit(form: any) {
     fetch('http://localhost:8080/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form.value)
     })
-    .then(res => res.json())
-    .then(data => {
-      console.log(data);
-      if (['Success', 'Redirect'].includes(data['status'])) {
-        this.router.navigate(['/login']);
-      } else {
-        this.errorMessage = data.status;
-      }
-    })
-    .catch(error => console.error('Error:', error));
+      .then(res => res.json())
+      .then(data => {
+        console.log(data);
+        if (['Success', 'Redirect'].includes(data['status'])) {
+          this.router.navigate(['/login']);
+        } else {
+          this.errorMessage = data.status;
+        }
+      })
+      .catch(error => console.error('Error:', error));
 
     console.log('Register Submitted', form.value)
   }

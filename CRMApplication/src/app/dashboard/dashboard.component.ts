@@ -12,4 +12,14 @@ import { CommonModule } from '@angular/common';
 })
 
 export class DashboardComponent {
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {
+    this.authService.auth_observer.subscribe(isLoggedIn => {
+      if (!isLoggedIn) {
+        this.router.navigateByUrl('/login');
+      }
+    })
+  }
 }

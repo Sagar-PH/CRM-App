@@ -54,7 +54,7 @@ const client = new MongoClient(url, {
 const collections = ['Contacts', 'Tasks', 'PurchaseOrders', 'SalesOrders', 'Vendors']
 
 express_app.post('/login', async (req, res) => {
-    // console.log('login requested..', req.body)
+    console.log('login requested..', req.body)
 
     if (isAuthenticated(req)) {
         return res.send({ type: 'login', status: "Redirect" })
@@ -75,6 +75,7 @@ express_app.post('/login', async (req, res) => {
 })
 
 express_app.post("/logout", (req, res) => {
+    console.log('logout triggered')
     if (!isAuthenticated(req)) {
         res.json({ type: 'logout', status: "no User" });
     }

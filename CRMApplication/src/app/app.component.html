@@ -1,1 +1,6 @@
-<router-outlet />
+@defer (when !auth.getLoadingState()) {
+    <router-outlet />
+}
+@placeholder {
+    Loading...
+}
