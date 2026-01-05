@@ -42,7 +42,7 @@ express_app.use(async (req, res, next) => {
 
 const PORT = 8080
 
-const url = "mongodb+srv://sagarph_db_user:Sagar%401701@cluster0.7epy1hb.mongodb.net/?appName=Cluster0";
+const url = "mongodb+srv://sagarph_db_user:sagarph%40db@cluster0.7epy1hb.mongodb.net/?appName=Cluster0";
 const client = new MongoClient(url, {
     serverApi: {
         version: ServerApiVersion.v1,
