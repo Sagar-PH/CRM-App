@@ -36,7 +36,7 @@
 
             <div class="form-group">
                 <label>Expected Delivery</label>
-                <input type="date" name="deliveryDate" [(ngModel)]="requested_data.DeliveryDate" />
+                <input type="date" name="deliveryDate" [(ngModel)]="requested_data.ExpectedDelivery" />
             </div>
 
             <div class="form-group">
@@ -53,28 +53,33 @@
 
         <!-- Item Details -->
         <h3 class="section-title">Item Details</h3>
-
+        
         <div class="form-grid">
+            <input type="text" name="productId" [(ngModel)]="requested_data.ProductId" ngModel hidden/>
 
             <div class="form-group">
                 <label>Product ID</label>
-                <input type="text" name="productId" [(ngModel)]="requested_data.ProductId"
-                    placeholder="Enter product ID" />
+                <select name="selectedProduct" [(ngModel)]="selectedProduct" (ngModelChange)="productIdChange($event, POrderEditForm)">
+                    <option *ngFor="let product of products_list" [ngValue]="product">
+                        {{ product.row_id }}
+                    </option>
+                </select>
             </div>
+
+            <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" name="productName" [(ngModel)]="requested_data.ProductName" readonly />
+            </div>
+
 
             <div class="form-group">
                 <label>Quantity</label>
-                <input type="number" name="quantity" [(ngModel)]="requested_data.Quantity" min="1" />
-            </div>
-
-            <div class="form-group">
-                <label>Unit Cost</label>
-                <input type="number" name="unitCost" [(ngModel)]="requested_data.UnitCost" min="0" />
+                <input type="number" name="quantity" [(ngModel)]="requested_data.Quantity" min="1" (ngModelChange)="productQuantityChange($event, POrderEditForm)"/>
             </div>
 
             <div class="form-group">
                 <label>Total Amount</label>
-                <input type="number" name="totalAmount" [(ngModel)]="requested_data.TotalAmount" min="0" />
+                <input type="number" name="totalAmount" [(ngModel)]="requested_data.TotalAmount" min="0" readonly/>
             </div>
 
         </div>

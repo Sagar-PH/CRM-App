@@ -146,8 +146,8 @@ express_app.post('/purchase_order/create', async (req, res) => {
         ExpectedDelivery: req.body['deliveryDate'],
         Status: req.body['status'],
         ProductId: req.body['productId'],
+        ProductName: req.body['productName'],
         Quantity: req.body['quantity'],
-        UnitCost: req.body['unitCost'],
         TotalAmount: req.body['totalAmount']
     };
 
@@ -200,8 +200,8 @@ express_app.post('/sales_order/create', async (req, res) => {
         ExpectedDelivery: req.body['deliveryDate'],
         Status: req.body['status'],
         ProductId: req.body['productId'],
+        ProductName: req.body['productName'],
         Quantity: req.body['quantity'],
-        UnitPrice: req.body['unitPrice'],
         TotalAmount: req.body['totalAmount']
     };
 
@@ -232,8 +232,8 @@ express_app.post('/sales_order/update', async (req, res) => {
         ExpectedDelivery: req.body['deliveryDate'],
         Status: req.body['status'],
         ProductId: req.body['productId'],
+        ProductName: req.body['productName'],
         Quantity: req.body['quantity'],
-        UnitPrice: req.body['unitPrice'],
         TotalAmount: req.body['totalAmount']
     };
 

@@ -47,25 +47,31 @@
         <h3 class="section-title">Item Details</h3>
 
         <div class="form-grid">
-
+            <input type="text" name="productId" ngModel hidden/>
+            
             <div class="form-group">
                 <label>Product ID</label>
-                <input type="text" name="productId" ngModel placeholder="Enter product ID" />
+                <select name="selectedProduct" ngModel (ngModelChange)="productIdChange($event, purchaseOrderForm)">
+                    <option *ngFor="let product of products_list" [ngValue]="product">
+                        {{ product.row_id }}
+                    </option>
+                </select>
             </div>
+
+            <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" name="productName" ngModel readonly />
+            </div>
+
 
             <div class="form-group">
                 <label>Quantity</label>
-                <input type="number" name="quantity" ngModel min="1" />
-            </div>
-
-            <div class="form-group">
-                <label>Unit Cost</label>
-                <input type="number" name="unitCost" ngModel min="0" />
+                <input type="number" name="quantity" ngModel min="1" (ngModelChange)="productQuantityChange($event, purchaseOrderForm)"/>
             </div>
 
             <div class="form-group">
                 <label>Total Amount</label>
-                <input type="number" name="totalAmount" ngModel min="0" />
+                <input type="number" name="totalAmount" ngModel min="0" readonly/>
             </div>
 
         </div>
