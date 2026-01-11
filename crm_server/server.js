@@ -178,8 +178,8 @@ express_app.post('/purchase_order/update', async (req, res) => {
         ExpectedDelivery: req.body['deliveryDate'],
         Status: req.body['status'],
         ProductId: req.body['productId'],
+        ProductName: req.body['productName'],
         Quantity: req.body['quantity'],
-        UnitCost: req.body['unitCost'],
         TotalAmount: req.body['totalAmount']
     };
 
