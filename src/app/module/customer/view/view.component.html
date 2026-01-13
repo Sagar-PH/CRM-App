@@ -1,0 +1,55 @@
+<div class="customer-view-page">
+
+    <div class="page-header">
+        <h2>Customers</h2>
+        <a routerLink="/customers/create" class="btn-primary">
+            + Create Customer
+        </a>
+    </div>
+
+    <div class="table-container" *ngIf="customers?.length; else emptyState">
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Customer ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>City</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr *ngFor="let customer of customers">
+                    <td>{{ customer.row_id }}</td>
+                    <td>{{ customer.CustomerName }}</td>
+                    <td>{{ customer.CustomerEmail }}</td>
+                    <td>{{ customer.CustomerPhone }}</td>
+                    <td>{{ customer.City }}</td>
+                    <td>
+                        <span class="status" [ngClass]="customer.Status">{{ customer.Status }}</span>
+                    </td>
+                    <td>
+                        <a class="link" [routerLink]="['/customers/edit', customer.row_id]">
+                            Edit
+                        </a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+    </div>
+
+    <ng-template #emptyState>
+        <div class="empty-state">
+            <p>No customers found.</p>
+            <a routerLink="/customers/create" class="btn-secondary">
+                Create your first customer
+            </a>
+        </div>
+    </ng-template>
+
+</div>

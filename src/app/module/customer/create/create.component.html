@@ -1,0 +1,96 @@
+<div class="customer-create-page">
+
+    <!-- Header -->
+    <div class="page-header">
+        <h2>Create Customer</h2>
+    </div>
+
+    <!-- Form -->
+    <form #customerForm="ngForm" (ngSubmit)="CustomerSubmit(customerForm)" class="customer-form">
+
+        <!-- Basic Info -->
+        <h3 class="section-title">Customer Information</h3>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Customer Name *</label>
+                <input type="text" name="customerName" ngModel required placeholder="Enter customer name" />
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" ngModel placeholder="customer@email.com" />
+            </div>
+
+            <div class="form-group">
+                <label>Phone</label>
+                <input type="text" name="phone" ngModel placeholder="+91 98765 43210" />
+            </div>
+
+            <div class="form-group">
+                <label>Website</label>
+                <input type="text" name="website" ngModel placeholder="www.example.com" />
+            </div>
+        </div>
+
+        <!-- Address -->
+        <h3 class="section-title">Billing Address</h3>
+
+        <div class="form-grid">
+            <div class="form-group full-width">
+                <label>Street</label>
+                <input type="text" name="street" ngModel />
+            </div>
+
+            <div class="form-group">
+                <label>City</label>
+                <input type="text" name="city" ngModel />
+            </div>
+
+            <div class="form-group">
+                <label>State</label>
+                <input type="text" name="state" ngModel />
+            </div>
+
+            <div class="form-group">
+                <label>Zip Code</label>
+                <input type="text" name="zip" ngModel />
+            </div>
+
+            <div class="form-group">
+                <label>Country</label>
+                <input type="text" name="country" ngModel />
+            </div>
+        </div>
+
+        <!-- Status -->
+        <h3 class="section-title">Other Details</h3>
+
+        <div class="form-grid">
+            <div class="form-group">
+                <label>Status</label>
+                <select name="status" ngModel>
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Customer Type</label>
+                <select name="customerType" ngModel>
+                    <option value="Business">Business</option>
+                    <option value="Individual">Individual</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+            <button type="submit" class="btn-primary" [disabled]="customerForm.invalid">
+                Save Contact
+            </button>
+            <a href="/customers/view" class="btn-secondary">Cancel</a>
+        </div>
+
+    </form>
+</div>

@@ -483,6 +483,68 @@ express_app.post('/products/update', async (req, res) => {
     return res.send({ product_update: 'success' });
 });
 
+// ---------------------- Customers ----------------------
+express_app.post('/customers/create', async (req, res) => {
+    const customers_col = user_database.collection('Customers');
+    const customer_row_id = await getNextRowId(customers_col)
+
+    const customer = {
+        row_id: customer_row_id,
+        CustomerName: req.body['customerName'],
+        CustomerEmail: req.body['email'],
+        CustomerPhone: req.body['phone'],
+        Website: req.body['website'],
+
+        Street: req.body['street'],
+        City: req.body['city'],
+        State: req.body['state'],
+        ZipCode: req.body['zip'],
+        Country: req.body['country'],
+
+        Status: req.body['status'],
+        CustomerType: req.body['customerType']     
+    };
+
+    const insert_status = await insertToCollection(customers_col, customer);
+    return res.send({ status: insert_status ? 'inserted' : 'insert failed' });
+});
+
+express_app.get('/customers/view', async (req, res) => {
+    const all_customers = await user_database.collection('Customers').find().toArray();
+    return res.send({ customers_request: all_customers });
+});
+
+express_app.get('/customers/edit/:id', async (req, res) => {
+    const { id } = req.params;
+    const customers_collection = user_database.collection('Customers');
+    const result = await findInCollection(customers_collection, { row_id: Number(id) });
+    return res.send({ customer_found: result });
+});
+
+express_app.post('/customers/update', async (req, res) => {
+    const customers_collection = user_database.collection('Customers');
+    const update_id = { row_id: req.body['customerId'] };
+
+    const customer = {
+        CustomerName: req.body['customerName'],
+        CustomerEmail: req.body['email'],
+        CustomerPhone: req.body['phone'],
+        Website: req.body['website'],
+        
+        Street: req.body['street'],
+        City: req.body['city'],
+        State: req.body['state'],
+        ZipCode: req.body['zip'],
+        Country: req.body['country'],
+
+        Status: req.body['status'],
+        CustomerType: req.body['customerType']
+    };
+
+    await updateCollection(customers_collection, update_id, customer);
+    return res.send({ customer_update: 'success' });
+});
+
 async function connectDB() {
     try {
         await client.connect();
