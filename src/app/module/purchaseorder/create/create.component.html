@@ -12,8 +12,12 @@
         <div class="form-grid">
 
             <div class="form-group">
+                <input type="text" name="vendorId" ngModel required hidden/>
+
                 <label>Vendor ID *</label>
-                <input type="text" name="vendorId" ngModel required placeholder="Enter vendor ID" />
+                <select name="selectedVendor" ngModel (ngModelChange)="selectedVendorChange($event, purchaseOrderForm)">
+                    <option *ngFor="let vendor of vendors_list" [ngValue]="vendor">{{vendor.row_id}}</option>
+                </select>
             </div>
 
             <div class="form-group">

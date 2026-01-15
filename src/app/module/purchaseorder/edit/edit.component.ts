@@ -15,7 +15,9 @@ export class EditComponent implements OnInit {
   id!: number;
   requested_data: any = null;
   products_list: any[] = [];
+  vendors_list: any[] = [];
   selectedProduct: any = null;
+  selectedVendor: any = null;
 
   constructor(private route: ActivatedRoute) { }
 
@@ -23,7 +25,7 @@ export class EditComponent implements OnInit {
     this.id = Number(this.route.snapshot.paramMap.get('id'));
 
     try {
-      const [productsRes, orderRes] = await Promise.all([
+      const [productsRes, orderRes, vendorsRes] = await Promise.all([
         fetch('http://localhost:8080/products/view', {
           method: 'GET',
           credentials: 'include'
@@ -31,19 +33,31 @@ export class EditComponent implements OnInit {
         fetch(`http://localhost:8080/purchase_order/edit/${this.id}`, {
           method: 'GET',
           credentials: 'include'
-        })
+        }),
+        fetch('http://localhost:8080/vendors/view', {
+          method: 'GET',
+          credentials: 'include'
+        }),
       ]);
 
       const productsData = await productsRes.json();
       const orderData = await orderRes.json();
+      const vendorsData = await vendorsRes.json();
 
       this.products_list = productsData.products_request || [];
+      this.vendors_list = vendorsData.vendors_request || [];
       this.requested_data = orderData.order_found || null;
 
       if (this.requested_data) {
         this.selectedProduct = this.products_list.find(
           p => p.row_id === this.requested_data.ProductId
         );
+
+        this.selectedVendor = this.vendors_list.find(
+          p => p.row_id === this.requested_data.VendorId
+        );
+
+        console.log('SV:: ', this.requested_data)
       }
 
     } catch (error) {
@@ -53,6 +67,8 @@ export class EditComponent implements OnInit {
 
   async PurchaseOrderEditSubmit(form: NgForm) {
     if (form.invalid) return;
+
+    console.log(form.value)
 
     try {
       const res = await fetch('http://localhost:8080/purchase_order/update', {
@@ -88,5 +104,17 @@ export class EditComponent implements OnInit {
     form.form.patchValue({
       totalAmount: quantity * product.Price
     });
+  }
+
+  vendorChange(vendor:any, form:NgForm) {
+    const sel_vendor = form.form.value.selectedVendor;
+    if(!sel_vendor) return;
+
+    console.log(form.form)
+
+    form.form.patchValue({
+      vendorId: vendor.row_id,
+      vendorName: vendor.VendorName,
+    })
   }
 }

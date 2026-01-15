@@ -18,15 +18,20 @@
         <div class="form-grid">
 
             <div class="form-group">
+                <input type="text" name="vendorId" [(ngModel)]="requested_data.VendorId" ngModel hidden/>
+
                 <label>Vendor ID *</label>
-                <input type="text" name="vendorId" [(ngModel)]="requested_data.VendorId" required
-                    placeholder="Enter vendor ID" />
+                <select name="selectedVendor" [(ngModel)]="selectedVendor" (ngModelChange)="vendorChange($event, POrderEditForm)">
+                    <option *ngFor="let vendor of vendors_list" [ngValue]="vendor">{{vendor.row_id}}</option>
+                </select>
+                <!-- <input type="text" name="vendorId" [(ngModel)]="requested_data.VendorId" required
+                    placeholder="Enter vendor ID" /> -->
             </div>
 
             <div class="form-group">
                 <label>Vendor Name *</label>
                 <input type="text" name="vendorName" [(ngModel)]="requested_data.VendorName" required
-                    placeholder="Enter vendor Name" />
+                    placeholder="Enter vendor Name" readonly/>
             </div>
 
             <div class="form-group">

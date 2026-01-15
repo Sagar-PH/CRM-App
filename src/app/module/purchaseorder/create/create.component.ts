@@ -10,15 +10,31 @@ import { FormsModule, NgForm } from '@angular/forms';
 })
 export class CreateComponent {
   products_list: any
+  vendors_list: any
 
-  ngOnInit() {
-    fetch('http://localhost:8080/products/view', {
-      method: 'GET',
-      credentials: 'include'
-    }).then(res => res.json())
-      .then(data => {
-        this.products_list = data['products_request']
-      }).catch(err => console.log('products request failed!'))
+  async ngOnInit() {
+    try {
+      const [products, vendors] = await Promise.all([
+        fetch('http://localhost:8080/products/view', {
+          method: 'GET',
+          credentials: 'include'
+        }),
+        fetch('http://localhost:8080/vendors/view', {
+          method: 'GET',
+          credentials: 'include'
+        })
+      ])
+
+      const products_data = await products.json()
+      const vendors_data = await vendors.json()
+
+      console.log(vendors_data)
+
+      this.products_list = products_data.products_request || [];
+      this.vendors_list = vendors_data.vendors_request || [];
+    } catch (error) {
+      console.error('Initialization failed:', error);
+    }
   }
 
   PurchaseOrderSubmit(POrderForm: any) {
@@ -53,6 +69,13 @@ export class CreateComponent {
         totalAmount: quantity * product_value.Price
       });
     }
-    
+  }
+
+  selectedVendorChange(vendor:any, purchaseOrderForm: NgForm) {
+    console.log('vid:: ', vendor, purchaseOrderForm.form.value)
+    purchaseOrderForm.form.patchValue({
+      vendorId: vendor.row_id,
+      vendorName: vendor.VendorName
+    })
   }
 }
