@@ -1,3 +1,5 @@
+const hp = require("./db_helper");
+
 const express = require('express')
 const session = require('express-session')
 
@@ -27,7 +29,7 @@ express_app.use(express.urlencoded({ extended: true }));
 express_app.use(async (req, res, next) => {
     // console.log('Session ID:', req.session.user);
     if (req.session.user) {
-        const user_found = await findInCollection(user_collection, {
+        const user_found = await hp.findInCollection(user_collection, {
             UserName: req.session.user['username']
         })
 
@@ -56,7 +58,7 @@ const collections = ['Contacts', 'Tasks', 'PurchaseOrders', 'SalesOrders', 'Vend
 express_app.post('/login', async (req, res) => {
     console.log('login requested..', req.body)
 
-    if (isAuthenticated(req)) {
+    if (hp.isAuthenticated(req)) {
         return res.send({ type: 'login', status: "Redirect" })
     }
 
@@ -76,7 +78,7 @@ express_app.post('/login', async (req, res) => {
 
 express_app.post("/logout", (req, res) => {
     console.log('logout triggered')
-    if (!isAuthenticated(req)) {
+    if (!hp.isAuthenticated(req)) {
         res.json({ type: 'logout', status: "no User" });
     }
 
@@ -100,7 +102,7 @@ express_app.get('/auth/check', (req, res) => {
 express_app.post('/register', async (req, res) => {
     console.log('register requested..', req.body)
 
-    if (isAuthenticated(req)) {
+    if (hp.isAuthenticated(req)) {
         return res.send({ type: 'register', status: "Redirect" })
     }
 
@@ -114,7 +116,7 @@ express_app.post('/register', async (req, res) => {
         Database: user_db
     }
 
-    let insert_status = await insertToCollection(user_collection, user_data)
+    let insert_status = await hp.insertToCollection(user_collection, user_data)
 
     if (insert_status) {
         user_database = client.db(user_db);
@@ -136,7 +138,7 @@ express_app.post('/register', async (req, res) => {
 // ---------------------- PURCHASE ORDERS ----------------------
 express_app.post('/purchase_order/create', async (req, res) => {
     const p_order_col = user_database.collection('PurchaseOrders');
-    const purchase_row_id = await getNextRowId(p_order_col)
+    const purchase_row_id = await hp.getNextRowId(p_order_col)
 
     const purchase_order = {
         row_id: purchase_row_id,
@@ -151,7 +153,7 @@ express_app.post('/purchase_order/create', async (req, res) => {
         TotalAmount: req.body['totalAmount']
     };
 
-    const insert_status = await insertToCollection(p_order_col, purchase_order);
+    const insert_status = await hp.insertToCollection(p_order_col, purchase_order);
     return res.send({ status: insert_status ? 'inserted' : 'insert failed' });
 });
 
@@ -163,7 +165,7 @@ express_app.get('/purchase_order/view', async (req, res) => {
 express_app.get('/purchase_order/edit/:id', async (req, res) => {
     const { id } = req.params;
     const purchase_collection = user_database.collection('PurchaseOrders');
-    const result = await findInCollection(purchase_collection, { row_id: Number(id) });
+    const result = await hp.findInCollection(purchase_collection, { row_id: Number(id) });
     return res.send({ order_found: result });
 });
 
@@ -183,14 +185,14 @@ express_app.post('/purchase_order/update', async (req, res) => {
         TotalAmount: req.body['totalAmount']
     };
 
-    await updateCollection(purchase_order_collection, update_id, purchase);
+    await hp.updateCollection(purchase_order_collection, update_id, purchase);
     return res.send({ order_update: 'success' });
 });
 
 // ---------------------- SALES ORDERS ----------------------
 express_app.post('/sales_order/create', async (req, res) => {
     const s_order_col = user_database.collection('SalesOrders');
-    const sales_row_id = await getNextRowId(s_order_col)
+    const sales_row_id = await hp.getNextRowId(s_order_col)
 
     const sales_order = {
         row_id: sales_row_id,
@@ -205,7 +207,7 @@ express_app.post('/sales_order/create', async (req, res) => {
         TotalAmount: req.body['totalAmount']
     };
 
-    const insert_status = await insertToCollection(s_order_col, sales_order);
+    const insert_status = await hp.insertToCollection(s_order_col, sales_order);
     return res.send({ status: insert_status ? 'inserted' : 'insert failed' });
 });
 
@@ -217,7 +219,7 @@ express_app.get('/sales_order/view', async (req, res) => {
 express_app.get('/sales_order/edit/:id', async (req, res) => {
     const { id } = req.params;
     const sales_collection = user_database.collection('SalesOrders');
-    const result = await findInCollection(sales_collection, { row_id: Number(id) });
+    const result = await hp.findInCollection(sales_collection, { row_id: Number(id) });
     return res.send({ order_found: result });
 });
 
@@ -237,14 +239,14 @@ express_app.post('/sales_order/update', async (req, res) => {
         TotalAmount: req.body['totalAmount']
     };
 
-    await updateCollection(sales_order_collection, update_id, sale);
+    await hp.updateCollection(sales_order_collection, update_id, sale);
     return res.send({ order_update: 'success' });
 });
 
 // ---------------------- VENDORS ----------------------
 express_app.post('/vendors/create', async (req, res) => {
     const vendors_col = user_database.collection('Vendors');
-    const vendor_row_id = await getNextRowId(vendors_col)
+    const vendor_row_id = await hp.getNextRowId(vendors_col)
 
     const vendor = {
         row_id: vendor_row_id,
@@ -257,7 +259,7 @@ express_app.post('/vendors/create', async (req, res) => {
         Status: req.body['status']
     };
 
-    const insert_status = await insertToCollection(vendors_col, vendor);
+    const insert_status = await hp.insertToCollection(vendors_col, vendor);
     return res.send({ status: insert_status ? 'inserted' : 'insert failed' });
 });
 
@@ -269,7 +271,7 @@ express_app.get('/vendors/view', async (req, res) => {
 express_app.get('/vendors/edit/:id', async (req, res) => {
     const { id } = req.params;
     const vendors_collection = user_database.collection('Vendors');
-    const result = await findInCollection(vendors_collection, { row_id: Number(id) });
+    const result = await hp.findInCollection(vendors_collection, { row_id: Number(id) });
     return res.send({ vendor_found: result });
 });
 
@@ -287,14 +289,14 @@ express_app.post('/vendors/update', async (req, res) => {
         Status: req.body['status']
     };
 
-    await updateCollection(vendors_collection, update_id, vendor);
+    await hp.updateCollection(vendors_collection, update_id, vendor);
     return res.send({ vendor_update: 'success' });
 });
 
 // ---------------------- CONTACTS ----------------------
 express_app.post('/contacts/create', async (req, res) => {
     const contacts_col = user_database.collection('Contacts');
-    const contact_row_id = await getNextRowId(contacts_col)
+    const contact_row_id = await hp.getNextRowId(contacts_col)
 
     const contact = {
         row_id: contact_row_id,
@@ -309,7 +311,7 @@ express_app.post('/contacts/create', async (req, res) => {
         Status: req.body['status']
     };
 
-    const insert_status = await insertToCollection(contacts_col, contact);
+    const insert_status = await hp.insertToCollection(contacts_col, contact);
     return res.send({ status: insert_status ? 'inserted' : 'insert failed' });
 });
 
@@ -321,7 +323,7 @@ express_app.get('/contacts/view', async (req, res) => {
 express_app.get('/contacts/edit/:id', async (req, res) => {
     const { id } = req.params;
     const contacts_collection = user_database.collection('Contacts');
-    const result = await findInCollection(contacts_collection, { row_id: Number(id) });
+    const result = await hp.findInCollection(contacts_collection, { row_id: Number(id) });
     return res.send({ contact_found: result });
 });
 
@@ -341,14 +343,14 @@ express_app.post('/contacts/update', async (req, res) => {
         Status: req.body['status']
     };
 
-    await updateCollection(contacts_collection, update_id, contact);
+    await hp.updateCollection(contacts_collection, update_id, contact);
     return res.send({ contact_update: 'success' });
 });
 
 // ---------------------- TASKS ----------------------
 express_app.post('/tasks/create', async (req, res) => {
     const tasks_col = user_database.collection('Tasks');
-    const task_row_id = await getNextRowId(tasks_col)
+    const task_row_id = await hp.getNextRowId(tasks_col)
 
     const task = {
         row_id: task_row_id,
@@ -361,7 +363,7 @@ express_app.post('/tasks/create', async (req, res) => {
         DueDate: req.body['dueDate']
     };
 
-    const insert_status = await insertToCollection(tasks_col, task);
+    const insert_status = await hp.insertToCollection(tasks_col, task);
     return res.send({ status: insert_status ? 'inserted' : 'insert failed' });
 });
 
@@ -373,7 +375,7 @@ express_app.get('/tasks/view', async (req, res) => {
 express_app.get('/tasks/edit/:id', async (req, res) => {
     const { id } = req.params;
     const tasks_collection = user_database.collection('Tasks');
-    const result = await findInCollection(tasks_collection, { row_id: Number(id) });
+    const result = await hp.findInCollection(tasks_collection, { row_id: Number(id) });
     return res.send({ task_found: result });
 });
 
@@ -391,7 +393,7 @@ express_app.post('/tasks/update', async (req, res) => {
         DueDate: req.body['dueDate']
     };
 
-    await updateCollection(task_collection, update_id, task);
+    await hp.updateCollection(task_collection, update_id, task);
     return res.send({ task_update: 'success' });
 });
 
@@ -416,7 +418,7 @@ express_app.get('/dashboard', async (req, res) => {
 express_app.post('/products/create', async (req, res) => {
     try {
         const product_col = user_database.collection('Products');
-        const product_row_id = await getNextRowId(product_col);
+        const product_row_id = await hp.getNextRowId(product_col);
 
         const product = {
             row_id: product_row_id,
@@ -433,7 +435,7 @@ express_app.post('/products/create', async (req, res) => {
             UpdatedAt: new Date()
         };
 
-        const insert_status = await insertToCollection(product_col, product);
+        const insert_status = await hp.insertToCollection(product_col, product);
         return res.send({ status: insert_status ? 'inserted' : 'insert failed', product });
     } catch (err) {
         console.error('Error creating product:', err);
@@ -479,14 +481,14 @@ express_app.post('/products/update', async (req, res) => {
     };
 
     console.log(product)
-    await updateCollection(product_collection, update_id, product);
+    await hp.updateCollection(product_collection, update_id, product);
     return res.send({ product_update: 'success' });
 });
 
 // ---------------------- Customers ----------------------
 express_app.post('/customers/create', async (req, res) => {
     const customers_col = user_database.collection('Customers');
-    const customer_row_id = await getNextRowId(customers_col)
+    const customer_row_id = await hp.getNextRowId(customers_col)
 
     const customer = {
         row_id: customer_row_id,
@@ -505,7 +507,7 @@ express_app.post('/customers/create', async (req, res) => {
         CustomerType: req.body['customerType']     
     };
 
-    const insert_status = await insertToCollection(customers_col, customer);
+    const insert_status = await hp.insertToCollection(customers_col, customer);
     return res.send({ status: insert_status ? 'inserted' : 'insert failed' });
 });
 
@@ -517,7 +519,7 @@ express_app.get('/customers/view', async (req, res) => {
 express_app.get('/customers/edit/:id', async (req, res) => {
     const { id } = req.params;
     const customers_collection = user_database.collection('Customers');
-    const result = await findInCollection(customers_collection, { row_id: Number(id) });
+    const result = await hp.findInCollection(customers_collection, { row_id: Number(id) });
     return res.send({ customer_found: result });
 });
 
@@ -541,95 +543,17 @@ express_app.post('/customers/update', async (req, res) => {
         CustomerType: req.body['customerType']
     };
 
-    await updateCollection(customers_collection, update_id, customer);
+    await hp.updateCollection(customers_collection, update_id, customer);
     return res.send({ customer_update: 'success' });
 });
 
-async function connectDB() {
-    try {
-        await client.connect();
-        const db = client.db("CRMAccount");
 
-        // const user_check = await db.listCollections({"name": "users"}).toArray()
-        // console.log(List of collection from query:: , user_check.length)
-
-        // await db.createCollection("users");
-
-        // Create if not present, use if present
-        user_collection = db.collection('users')
-        await user_collection.createIndex({ UserName: 1 }, { unique: true });
-
-        console.log("Connected to MongoDB", db.users);
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-async function insertToCollection(db_collection, user_data) {
-    try {
-        await db_collection.insertOne(user_data)
-        console.log('insert success')
-        return true
-    } catch (err) {
-        console.log('insert fail')
-        return false
-    }
-}
-
-async function findInCollection(db_collection, find_query) {
-    try {
-        const result = await db_collection.findOne(find_query)
-        // console.log("Found the data:: ", result)
-        return result
-    } catch (err) {
-        console.log('Querying Failed!', err)
-        return null
-    }
-}
-
-async function updateCollection(udt_collection, update_id, update_data, upsert = false) {
-    try {
-        const result = await udt_collection.updateOne(
-            update_id,
-            {
-                $set: update_data
-            },
-            { upsert: upsert }
-        )
-
-        console.log("Update Success:: ", result)
-    } catch (err) {
-        console.log('Querying Failed!', err)
-    }
-}
-
-async function getNextRowId(collection) {
-    try {
-        const lastRecord = await collection
-            .find({}, { projection: { row_id: 1 } })
-            .sort({ row_id: -1 })
-            .limit(1)
-            .toArray();
-
-        if (lastRecord.length === 0) return 1; // First record
-        return lastRecord[0].row_id + 1;
-    } catch (error) {
-        console.error("Error generating next row_id:", error);
-        throw error;
-    }
-}
-
-
-function isAuthenticated(request) {
-    let user_check = request.session.user
-    if (user_check === undefined || user_check === null) {
-        return false
-    }
-
-    return true
-}
+// Sales Analysis
+express_app.get('/analysis/sales', async (req, res) => {
+    await hp.sales_analysis(user_database)
+})
 
 express_app.listen(PORT, async () => {
-    await connectDB()
+    user_collection = await hp.connectDB(client)
     console.log('Listening...', PORT)
 })
