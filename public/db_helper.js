@@ -121,6 +121,7 @@ class DBHelper {
                     $group: {
                         _id: {
                             productId: "$ProductId",
+                            productName: "$ProductName",
                             month: "$yearMonth"
                         },
                         units_sold: { $sum: "$Quantity" },
@@ -181,6 +182,7 @@ class DBHelper {
 
                 result.push({
                     productId: pid,
+                    productName: history[0]._id.productName,
                     period_months: months,
                     current_period: {
                         from: currentPeriod[0]._id.month,
@@ -227,6 +229,7 @@ class DBHelper {
                 {
                     $group: {
                         _id: "$ProductId",
+                        productName: { $first: "$ProductName" },
                         units_sold: { $sum: "$Quantity" },
                         product_revenue: { $sum: "$TotalAmount" }
                     }
@@ -256,6 +259,7 @@ class DBHelper {
                 {
                     $group: {
                         _id: "$ProductId",
+                        productName: { $first: "$ProductName" },
                         sold_units: { $sum: "$Quantity" },
                         revenue: { $sum: "$TotalAmount" }
                     }
@@ -270,6 +274,7 @@ class DBHelper {
                 {
                     $group: {
                         _id: "$ProductId",
+                        productName: { $first: "$ProductName" },
                         purchased_units: { $sum: "$Quantity" }
                     }
                 }
@@ -287,6 +292,7 @@ class DBHelper {
 
                 return {
                     productId: s._id,
+                    productName: s.productName,
                     sold_units: s.sold_units,
                     purchased_units: purchased,
                     revenue: s.revenue,
@@ -326,6 +332,7 @@ class DBHelper {
                     $group: {
                         _id: {
                             productId: "$ProductId",
+                            productName: "$ProductName",
                             month: "$yearMonth"
                         },
                         monthly_revenue: { $sum: "$TotalAmount" }
@@ -341,29 +348,35 @@ class DBHelper {
                 const pid = row._id.productId;
 
                 if (!productMap[pid]) {
-                    productMap[pid] = [];
+                    productMap[pid] = {
+                        productName: row._id.productName,
+                        revenues: []
+                    };
                 }
 
-                productMap[pid].push(row.monthly_revenue);
+                productMap[pid].revenues.push(row.monthly_revenue);
             }
 
-            // 3. Forecast per product
             const result = Object.keys(productMap).map(pid => {
-                const revenues = productMap[pid].slice(0, months);
-                const total = revenues.reduce((a, b) => a + b, 0);
-                const avg = revenues.length ? total / revenues.length : 0;
+                const { productName, revenues } = productMap[pid];
+
+                const recentRevenues = revenues.slice(0, months);
+                const total = recentRevenues.reduce((a, b) => a + b, 0);
+                const avg = recentRevenues.length ? total / recentRevenues.length : 0;
 
                 let confidence = "Low";
-                if (revenues.length >= months) confidence = "High";
-                else if (revenues.length >= Math.ceil(months / 2)) confidence = "Medium";
+                if (recentRevenues.length >= months) confidence = "High";
+                else if (recentRevenues.length >= Math.ceil(months / 2)) confidence = "Medium";
 
                 return {
                     productId: pid,
-                    months_used: revenues.length,
+                    productName,                 // ✅ fixed
+                    months_used: recentRevenues.length,
                     forecast_revenue: avg.toFixed(2),
                     confidence
                 };
             });
+
 
             res.json(result);
 
@@ -388,6 +401,7 @@ class DBHelper {
                 {
                     $group: {
                         _id: "$ProductId",
+                        productName: { $first: "$ProductName" },
                         sold_units: { $sum: "$Quantity" }
                     }
                 }
@@ -402,6 +416,7 @@ class DBHelper {
                 {
                     $group: {
                         _id: "$ProductId",
+                        productName: { $first: "$ProductName" },
                         purchased_units: { $sum: "$Quantity" }
                     }
                 }
@@ -472,6 +487,7 @@ class DBHelper {
                 {
                     $group: {
                         _id: "$ProductId",
+                        productName: { $first: "$ProductName" },
                         sold_units: { $sum: "$Quantity" }
                     }
                 }
@@ -485,6 +501,7 @@ class DBHelper {
                 {
                     $group: {
                         _id: "$ProductId",
+                        productName: { $first: "$ProductName" },
                         purchased_units: { $sum: "$Quantity" }
                     }
                 }
@@ -505,6 +522,7 @@ class DBHelper {
 
                 return {
                     productId: s._id,
+                    productName: s.productName,
                     recommended_qty: reorderQty,
                     reason:
                         reorderQty > 0
