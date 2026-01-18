@@ -409,8 +409,7 @@ class DBHelper {
 
             // 3. Product stock (ALL products)
             const products = await db.collection("Products").find(
-                {},
-                { projection: { name: 1, current_stock: 1 } }
+                {}, { projection: { Name: 1, Stock: 1 } }
             ).toArray();
 
             // Maps for fast lookup
@@ -442,8 +441,8 @@ class DBHelper {
 
                 return {
                     productId: p._id,
-                    product_name: p.name,
-                    current_stock: p.current_stock,
+                    product_name: p.Name,
+                    current_stock: p.Stock,
                     sold_units: sold,
                     purchased_units: purchased,
                     inventory_status: risk
