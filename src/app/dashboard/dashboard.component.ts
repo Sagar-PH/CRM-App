@@ -13,6 +13,7 @@ import {
   Legend,
   Filler
 } from 'chart.js';
+import { FormsModule } from '@angular/forms';
 
 Chart.register(
   LineController,
@@ -30,11 +31,25 @@ Chart.register(
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule],
+  imports: [FormsModule, CommonModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
 export class DashboardComponent implements OnInit {
+  Math = Math
+
+  total_revenue = 0;
+  revenue_growth = 0;
+
+  total_sales = 0;
+  sales_growth = 0;
+
+  featured_product = '';
+  featured_product_revenue = 0;
+  featured_product_revenue_collected = '';
+
+  total_purchase = 0;
+  purchase_growth = 0;
 
   total_sales_count = 0;
   total_purchase_count = 0;
@@ -49,11 +64,16 @@ export class DashboardComponent implements OnInit {
   selectedYear = new Date().getFullYear();
 
   ngOnInit() {
+    this.loadDatabaseAndCharts()
+    this.loadSalesTrends()
+    this.loadTopProduct()
+  }
+
+  loadDatabaseAndCharts() {
     fetch('http://localhost:8080/dashboard', {
       method: 'GET',
       credentials: 'include'
-    })
-      .then(res => res.json())
+    }).then(res => res.json())
       .then(data => {
         this.salesData = data.sales;
         this.purchaseData = data.purchase;
@@ -67,7 +87,116 @@ export class DashboardComponent implements OnInit {
         this.years = this.getPreviousTenYears();
         this.renderCombinedChart();
         this.renderTasksDonut();
-      });
+      })
+      .catch(err => console.log('submit failed'));
+  }
+
+  loadSalesTrends() {
+    fetch('http://localhost:8080/analytics/sales-trends', {
+      method: 'GET',
+      credentials: 'include'
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log(data)
+
+        const current_revenue = data.reduce((sum: number, sale: any) => {
+          return sum += sale.current_period.revenue
+        }, 0)
+
+        const current_sales = data.reduce((sum: number, sale: any) => {
+          return sum += sale.current_period.units
+        }, 0)
+
+        const previous_revenue = data.reduce((sum: number, sale: any) => {
+          return sum += sale.previous_period.revenue
+        }, 0)
+
+        const previous_sales = data.reduce((sum: number, sale: any) => {
+          return sum += sale.previous_period.units
+        }, 0)
+
+        this.total_revenue = current_revenue
+        this.total_sales = current_sales
+
+        let highest_rev, lowest_rev
+        let highest_sales, lowest_sales
+
+        if (current_revenue > previous_revenue) {
+          highest_rev = current_revenue
+          lowest_rev = previous_revenue
+        } else if (previous_revenue > current_revenue) {
+          highest_rev = previous_revenue
+          lowest_rev = current_revenue
+        }
+
+        if (highest_rev) {
+          this.revenue_growth = Math.round((100 * (highest_rev - lowest_rev)) / highest_rev);
+        }
+
+        if (current_sales > previous_sales) {
+          highest_sales = current_sales
+          lowest_sales = previous_sales
+        } else if (previous_sales > current_sales) {
+          highest_sales = previous_sales
+          lowest_sales = current_sales
+        }
+
+        if (highest_sales) {
+          this.sales_growth = Math.round((100 * (highest_sales - lowest_sales)) / highest_sales);
+        }
+      }).catch(err => console.log('submit failed'))
+  }
+
+  formatRevenue(value: number): string {
+    if (value >= 1_000_000_000) {
+      return (value / 1_000_000_000).toFixed(1) + 'B';
+    }
+    if (value >= 1_000_000) {
+      return (value / 1_000_000).toFixed(1) + 'M';
+    }
+    if (value >= 1_000) {
+      return (value / 1_000).toFixed(1) + 'K';
+    }
+    return '₹' + value.toString();
+  }
+
+  loadTopProduct() {
+    fetch('http://localhost:8080/analytics/top-products', {
+      method: 'GET',
+      credentials: 'include'
+    })
+      .then(res => res.json())
+      .then(data => {
+        console.log(data)
+
+        let revenue_product: any
+        let revenue_percentage = -1
+
+        const product_total_revenue = data.reduce((rev_sum: any, product: any) => {
+          return rev_sum += product.product_revenue
+        }, 0)
+
+        data.forEach((product: any) => {
+          console.log()
+          const product_revenue = Math.round(
+            (100 * (product_total_revenue - product.product_revenue)) / product_total_revenue);
+
+          console.log(product.productName, product_revenue)
+
+          if (revenue_percentage === -1 || product_revenue > revenue_percentage) {
+            revenue_percentage = product_revenue
+            revenue_product = product
+          }
+        })
+
+        if (revenue_percentage > 0) {
+          this.featured_product = revenue_product.productName
+          this.featured_product_revenue = revenue_percentage
+          this.featured_product_revenue_collected = this.formatRevenue(revenue_product.product_revenue)
+        }
+
+      }).catch(err => console.log(err))
   }
 
   getPreviousTenYears(): number[] {
@@ -81,7 +210,7 @@ export class DashboardComponent implements OnInit {
   }
 
   renderCombinedChart() {
-    const canvas = document.getElementById('combinedChart') as HTMLCanvasElement;
+    const canvas = document.getElementById('lightLineChart') as HTMLCanvasElement;
     if (!canvas) return;
     const ctx = canvas.getContext('2d')!;
 
@@ -103,15 +232,15 @@ export class DashboardComponent implements OnInit {
     Chart.getChart('combinedChart')?.destroy();
 
     // Helper to create gradient safely
-    const createGradient = (context: any, color: string) => {
+    const createGradient = (context: any) => {
       const chart = context.chart;
       const { ctx, chartArea } = chart;
 
       if (!chartArea) return null; // Wait for initialization
 
       const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-      gradient.addColorStop(0, color);          // Solid color at peak
-      gradient.addColorStop(1, 'transparent');  // Fade to nothing at X-axis
+      gradient.addColorStop(0, 'rgba(79, 70, 229, 0.2)');          // Solid color at peak
+      gradient.addColorStop(1, 'rgba(79, 70, 229, 0)');  // Fade to nothing at X-axis
       return gradient;
     };
 
@@ -124,32 +253,30 @@ export class DashboardComponent implements OnInit {
             label: 'Sales Orders',
             data: salesValues,
             borderColor: 'rgba(79, 70, 229)',
-            backgroundColor: (context) => createGradient(context, 'rgba(79, 70, 229)'),
-            borderWidth: 1,
-            tension: 0.4,
+            backgroundColor: (context) => createGradient(context),
             fill: true,
-            pointRadius: 1
+            borderWidth: 2,
+            tension: 0.4,
+            pointBackgroundColor: '#4f46e5',
+            pointRadius: 3
           },
           {
             label: 'Purchase Orders',
             data: purchaseValues,
             borderColor: '#4F0015',
-            backgroundColor: (context) => createGradient(context, '#4F0015'),
-            borderWidth: 1,
-            tension: 0.4,
-            fill: true,
-            pointRadius: 1
+            backgroundColor: (context) => createGradient(context),
+            borderWidth: 2,
+            borderDash: [6, 6],
+            fill: false,
+            tension: 0.4
           }
         ]
       },
       options: {
         responsive: true,
         scales: {
-          x: { grid: { display: false } },
-          y: {
-            beginAtZero: true,
-            grid: { color: 'rgba(0,0,0,0.05)' }
-          }
+          y: { grid: { color: '#f1f5f9' }, border: { display: false } },
+          x: { grid: { display: false } }
         },
         plugins: {
           legend: { position: 'bottom' }
@@ -157,8 +284,6 @@ export class DashboardComponent implements OnInit {
       }
     });
   }
-
-
 
   renderTasksDonut() {
     const statusCount: any = {
@@ -175,7 +300,7 @@ export class DashboardComponent implements OnInit {
 
     Chart.getChart('tasksChart')?.destroy();
 
-    new Chart('tasksChart', {
+    new Chart('lightDonutChart', {
       type: 'doughnut',
       data: {
         labels: ['Planned', 'Completed', 'Cancelled'],
@@ -185,19 +310,16 @@ export class DashboardComponent implements OnInit {
             statusCount.Completed,
             statusCount.Cancelled
           ],
-          backgroundColor: ['#f97316', '#3b82f6', '#22c55e'],
+          backgroundColor: ['#4f46e5', '#818cf8', '#e2e8f0'],
           borderWidth: 2
         }]
       },
       options: {
         responsive: true,
-        cutout: '60%',
-        radius: '60%',
-        plugins: {
-          legend: {
-            position: 'bottom'
-          }
-        }
+        maintainAspectRatio: false,
+        cutout: '65%',
+        radius: '65%',
+        plugins: { legend: { position: 'bottom' } }
       }
     });
   }
