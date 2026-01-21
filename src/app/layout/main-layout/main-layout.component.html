@@ -1,37 +1,37 @@
 <div class="app-container">
 
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="brand">
-            <span>MyCRM</span>
-        </div>
-
-        <nav class="nav-menu">
-            <a href="/dashboard">Dashboard</a>
-            <a href="/products/view">Products</a>
-            <a href="/customers/view">Customers</a>
-            <a href="/vendors/view">Vendors</a>
-            <a href="/salesorder/view">Sales Orders</a>
-            <a href="/purchaseorder/view">Purchase Orders</a>
-            <a href="/tasks/view">Tasks</a>
-            <a href="/contacts/view">Contacts</a>
-        </nav>
-
-        <button class="logout-btn" (click)="logout()">Logout</button>
-    </aside>
-
-    <!-- Main Content -->
-    <div class="main-content">
-
-        <!-- Top Navbar -->
-        <header class="topbar">
-            <h3>CRM Dashboard</h3>
-        </header>
-
-        <!-- Routed Page -->
-        <main class="content-area">
-            <router-outlet></router-outlet>
-        </main>
-
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <span>My CRM</span>
     </div>
+
+    <nav class="nav-menu">
+      <a href="/dashboard"><i class="material-icons">dashboard</i> Dashboard</a>
+      <a href="/products/view"><i class="material-icons">inventory_2</i> Products</a>
+      <a href="/customers/view"><i class="material-icons">groups</i> Customers</a>
+      <a href="/vendors/view"><i class="material-icons">store</i> Vendors</a>
+      <a href="/salesorder/view"><i class="material-icons">receipt_long</i> Sales Orders</a>
+      <a href="/purchaseorder/view"><i class="material-icons">shopping_cart</i> Purchase Orders</a>
+      <a href="/tasks/view"><i class="material-icons">task_alt</i> Tasks</a>
+      <a href="/contacts/view"><i class="material-icons">person</i> Contacts</a>
+    </nav>
+
+    <button class="logout-btn">Logout</button>
+  </aside>
+
+  <!-- Main Content -->
+  <div class="main-content">
+
+    <!-- Top Navbar -->
+    <header class="topbar">
+      <h3>CRM Dashboard</h3>
+    </header>
+
+    <!-- Routed Page -->
+    <main class="content-area">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
 </div>
