@@ -549,6 +549,7 @@ express_app.post('/customers/update', async (req, res) => {
 
 // Sales Analysis
 express_app.get("/analytics/sales-trends", hp.salesTrends);
+express_app.get("/analytics/purchases-trends", hp.purchaseTrends);
 express_app.get("/analytics/top-products", hp.topProducts);
 express_app.get("/analytics/sales-vs-purchase", hp.salesVsPurchase);
 

@@ -63,9 +63,14 @@ export class DashboardComponent implements OnInit {
   years: number[] = [];
   selectedYear = new Date().getFullYear();
 
+  now = new Date();
+  year = this.now.getFullYear();
+  monthName = this.now.toLocaleString('default', { month: 'long' });
+
   ngOnInit() {
     this.loadDatabaseAndCharts()
-    this.loadSalesTrends()
+    this.loadTrends('sale')
+    this.loadTrends('purchase')
     this.loadTopProduct()
   }
 
@@ -91,36 +96,25 @@ export class DashboardComponent implements OnInit {
       .catch(err => console.log('submit failed'));
   }
 
-  loadSalesTrends() {
-    fetch('http://localhost:8080/analytics/sales-trends', {
+  loadTrends(type: string) {
+    fetch(`http://localhost:8080/analytics/${type}s-trends`, {
       method: 'GET',
       credentials: 'include'
     })
       .then(res => res.json())
       .then(data => {
-        console.log(data)
+        console.log(type, ' :: ', data)
 
-        const current_revenue = data.reduce((sum: number, sale: any) => {
-          return sum += sale.current_period.revenue
-        }, 0)
+        const current_revenue = data.reduce((sum: number, trend_type: any) => {
+          return sum += trend_type.current_period.revenue}, 0)
+        const current_trend_type = data.reduce((sum: number, trend_type: any) => {
+          return sum += trend_type.current_period.units}, 0)
+        const previous_revenue = data.reduce((sum: number, trend_type: any) => {
+          return sum += trend_type.previous_period.revenue}, 0)
+        const previous_trend_type = data.reduce((sum: number, trend_type: any) => {
+          return sum += trend_type.previous_period.units}, 0)
 
-        const current_sales = data.reduce((sum: number, sale: any) => {
-          return sum += sale.current_period.units
-        }, 0)
-
-        const previous_revenue = data.reduce((sum: number, sale: any) => {
-          return sum += sale.previous_period.revenue
-        }, 0)
-
-        const previous_sales = data.reduce((sum: number, sale: any) => {
-          return sum += sale.previous_period.units
-        }, 0)
-
-        this.total_revenue = current_revenue
-        this.total_sales = current_sales
-
-        let highest_rev, lowest_rev
-        let highest_sales, lowest_sales
+        let highest_rev, lowest_rev, rev_growth, growth_prefix = 1
 
         if (current_revenue > previous_revenue) {
           highest_rev = current_revenue
@@ -128,35 +122,47 @@ export class DashboardComponent implements OnInit {
         } else if (previous_revenue > current_revenue) {
           highest_rev = previous_revenue
           lowest_rev = current_revenue
+          growth_prefix = -1
         }
 
-        if (highest_rev) {
-          this.revenue_growth = Math.round((100 * (highest_rev - lowest_rev)) / highest_rev);
-        }
+        if (highest_rev) rev_growth = Math.round(
+          (100 * (highest_rev - lowest_rev)) / highest_rev);
 
-        if (current_sales > previous_sales) {
-          highest_sales = current_sales
-          lowest_sales = previous_sales
-        } else if (previous_sales > current_sales) {
-          highest_sales = previous_sales
-          lowest_sales = current_sales
-        }
+        if (type === "sale") {
+          let highest_trend_type, lowest_trend_type, u_growth_prefix = 1
 
-        if (highest_sales) {
-          this.sales_growth = Math.round((100 * (highest_sales - lowest_sales)) / highest_sales);
+          if (current_trend_type > previous_trend_type) {
+            highest_trend_type = current_trend_type
+            lowest_trend_type = previous_trend_type
+          } else if (previous_trend_type > current_trend_type) {
+            highest_trend_type = previous_trend_type
+            lowest_trend_type = current_trend_type
+            u_growth_prefix = -1
+          }
+
+          this.total_revenue = current_revenue
+          this.revenue_growth = growth_prefix * (rev_growth || 0)
+
+          this.total_sales = current_trend_type
+          if (highest_trend_type) this.sales_growth = u_growth_prefix * Math.round(
+            (100 * (highest_trend_type - lowest_trend_type)) / highest_trend_type);
+
+        } else {
+          this.total_purchase = current_revenue
+          this.purchase_growth = growth_prefix * (rev_growth || 0)
         }
       }).catch(err => console.log('submit failed'))
   }
 
   formatRevenue(value: number): string {
     if (value >= 1_000_000_000) {
-      return (value / 1_000_000_000).toFixed(1) + 'B';
+      return '₹' + (value / 1_000_000_000).toFixed(1) + 'B';
     }
     if (value >= 1_000_000) {
-      return (value / 1_000_000).toFixed(1) + 'M';
+      return '₹' + (value / 1_000_000).toFixed(1) + 'M';
     }
     if (value >= 1_000) {
-      return (value / 1_000).toFixed(1) + 'K';
+      return '₹' + (value / 1_000).toFixed(1) + 'K';
     }
     return '₹' + value.toString();
   }
@@ -168,7 +174,7 @@ export class DashboardComponent implements OnInit {
     })
       .then(res => res.json())
       .then(data => {
-        console.log(data)
+        // console.log("TP:: ", data)
 
         let revenue_product: any
         let revenue_percentage = -1
@@ -178,11 +184,10 @@ export class DashboardComponent implements OnInit {
         }, 0)
 
         data.forEach((product: any) => {
-          console.log()
           const product_revenue = Math.round(
-            (100 * (product_total_revenue - product.product_revenue)) / product_total_revenue);
+            (100 * (product.product_revenue)) / product_total_revenue);
 
-          console.log(product.productName, product_revenue)
+          // console.log(product.productName, product_revenue)
 
           if (revenue_percentage === -1 || product_revenue > revenue_percentage) {
             revenue_percentage = product_revenue

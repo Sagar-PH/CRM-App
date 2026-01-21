@@ -103,105 +103,7 @@ class DBHelper {
             const months = parseInt(req.query.months || 1);
 
             const sales_collection = await db.collection('SalesOrders');
-
-            // Step 1: Monthly aggregation
-            const monthlyData = await sales_collection.aggregate([
-                {
-                    $addFields: {
-                        orderDateObj: { $toDate: "$OrderDate" },
-                        yearMonth: {
-                            $dateToString: {
-                                format: "%Y-%m",
-                                date: { $toDate: "$OrderDate" }
-                            }
-                        }
-                    }
-                },
-                {
-                    $group: {
-                        _id: {
-                            productId: "$ProductId",
-                            productName: "$ProductName",
-                            month: "$yearMonth"
-                        },
-                        units_sold: { $sum: "$Quantity" },
-                        product_revenue: { $sum: "$TotalAmount" }
-                    }
-                },
-                {
-                    $sort: {
-                        "_id.productId": 1,
-                        "_id.month": 1
-                    }
-                }
-            ]).toArray();
-
-            // Step 2: Group by product
-            const productMap = {};
-            for (const row of monthlyData) {
-                const pid = row._id.productId;
-                if (!productMap[pid]) productMap[pid] = [];
-                productMap[pid].push(row);
-            }
-
-            // Step 3: Period-over-period comparison
-            const result = [];
-
-            for (const pid in productMap) {
-                const history = productMap[pid];
-
-                // Need at least 2 * N months
-                if (history.length < months * 2) continue;
-
-                const currentPeriod = history.slice(-months);
-                const previousPeriod = history.slice(-months * 2, -months);
-
-                const currentRevenue = currentPeriod.reduce(
-                    (sum, m) => sum + m.product_revenue, 0
-                );
-                const previousRevenue = previousPeriod.reduce(
-                    (sum, m) => sum + m.product_revenue, 0
-                );
-
-                const currentUnits = currentPeriod.reduce(
-                    (sum, m) => sum + m.units_sold, 0
-                );
-                const previousUnits = previousPeriod.reduce(
-                    (sum, m) => sum + m.units_sold, 0
-                );
-
-                const revenueGrowth =
-                    previousRevenue > 0
-                        ? ((currentRevenue - previousRevenue) / previousRevenue) * 100
-                        : null;
-
-                const unitsGrowth =
-                    previousUnits > 0
-                        ? ((currentUnits - previousUnits) / previousUnits) * 100
-                        : null;
-
-                result.push({
-                    productId: pid,
-                    productName: history[0]._id.productName,
-                    period_months: months,
-                    current_period: {
-                        from: currentPeriod[0]._id.month,
-                        to: currentPeriod[currentPeriod.length - 1]._id.month,
-                        revenue: currentRevenue,
-                        units: currentUnits
-                    },
-                    previous_period: {
-                        from: previousPeriod[0]._id.month,
-                        to: previousPeriod[previousPeriod.length - 1]._id.month,
-                        revenue: previousRevenue,
-                        units: previousUnits
-                    },
-                    revenue_trend: this.getTrendTag(revenueGrowth),
-                    units_trend: this.getTrendTag(unitsGrowth),
-                    revenue_growth: revenueGrowth !== null ? revenueGrowth.toFixed(2) : null,
-                    units_growth: unitsGrowth !== null ? unitsGrowth.toFixed(2) : null
-                });
-            }
+            const result = await this.get_collection_trend(sales_collection, months)
 
             res.json(result);
         } catch (err) {
@@ -209,6 +111,153 @@ class DBHelper {
         }
 
     }
+
+    static purchaseTrends = async (req, res) => {
+        try {
+            const db = req.user_database;
+            const months = parseInt(req.query.months || 1);
+
+            const purchases_collection = await db.collection('PurchaseOrders');
+            const result = await this.get_collection_trend(purchases_collection, months)
+
+            res.json(result);
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+
+    }
+
+    static getLastNMonths(n) {
+        const result = [];
+        const now = new Date();
+        now.setDate(1); // normalize
+
+        for (let i = 0; i < n; i++) {
+            const d = new Date(now.getFullYear(), now.getMonth() - (n - 1 - i), 1);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, "0");
+            result.push(`${year}-${month}`);
+        }
+
+        return result;
+    }
+
+
+    static get_collection_trend = async (trend_check_collection, months) => {
+
+        // Step 1: Monthly aggregation
+        const monthlyData = await trend_check_collection.aggregate([
+            {
+                $addFields: {
+                    orderDateObj: { $toDate: "$OrderDate" },
+                    yearMonth: {
+                        $dateToString: {
+                            format: "%Y-%m",
+                            date: { $toDate: "$OrderDate" }
+                        }
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: {
+                        productId: "$ProductId",
+                        productName: "$ProductName",
+                        month: "$yearMonth"
+                    },
+                    units_sold: { $sum: "$Quantity" },
+                    product_revenue: { $sum: "$TotalAmount" }
+                }
+            },
+            {
+                $sort: {
+                    "_id.productId": 1,
+                    "_id.month": 1
+                }
+            }
+        ]).toArray();
+
+        // Step 2: Group by product
+        const productMap = {};
+        for (const row of monthlyData) {
+            const pid = row._id.productId;
+            if (!productMap[pid]) productMap[pid] = [];
+            productMap[pid].push(row);
+        }
+
+        // Step 3: Normalize timeline & compare periods
+        const result = [];
+        const totalMonths = months * 2;
+        const timeline = this.getLastNMonths(totalMonths);
+        // console.log('TIMELINE:: ', timeline)
+
+        for (const pid in productMap) {
+            const history = productMap[pid];
+
+            // Map month -> values
+            const monthMap = {};
+            for (const row of history) {
+                monthMap[row._id.month] = {
+                    revenue: row.product_revenue,
+                    units: row.units_sold
+                };
+            }
+
+            // Fill missing months with zero
+            const normalized = timeline.map(m => ({
+                month: m,
+                revenue: monthMap[m]?.revenue || 0,
+                units: monthMap[m]?.units || 0
+            }));
+
+            const previousPeriod = normalized.slice(0, months);
+            const currentPeriod = normalized.slice(months);
+
+            const previousRevenue = previousPeriod.reduce((s, m) => s + m.revenue, 0);
+            const currentRevenue = currentPeriod.reduce((s, m) => s + m.revenue, 0);
+
+            const previousUnits = previousPeriod.reduce((s, m) => s + m.units, 0);
+            const currentUnits = currentPeriod.reduce((s, m) => s + m.units, 0);
+
+            const revenueGrowth =
+                previousRevenue > 0
+                    ? ((currentRevenue - previousRevenue) / previousRevenue) * 100
+                    : null;
+
+            const unitsGrowth =
+                previousUnits > 0
+                    ? ((currentUnits - previousUnits) / previousUnits) * 100
+                    : null;
+
+            result.push({
+                productId: pid,
+                productName: history[0]._id.productName,
+                period_months: months,
+
+                current_period: {
+                    from: currentPeriod[0].month,
+                    to: currentPeriod[currentPeriod.length - 1].month,
+                    revenue: currentRevenue, // ✅ 0 if no sales
+                    units: currentUnits
+                },
+
+                previous_period: {
+                    from: previousPeriod[0].month,
+                    to: previousPeriod[previousPeriod.length - 1].month,
+                    revenue: previousRevenue,
+                    units: previousUnits
+                },
+
+                revenue_trend: this.getTrendTag(revenueGrowth),
+                units_trend: this.getTrendTag(unitsGrowth),
+
+                revenue_growth: revenueGrowth !== null ? revenueGrowth.toFixed(2) : null,
+                units_growth: unitsGrowth !== null ? unitsGrowth.toFixed(2) : null
+            });
+        }
+
+        return result;
+    };
 
     static topProducts = async (req, res) => {
         try {
